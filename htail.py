@@ -129,10 +129,13 @@ def tail(stream,
         verbose=False, netrc_path=None):
     httpfile_list = []
     append = httpfile_list.append
-    if netrc_path is False:
-        getNetRCAuth = lambda _: None
-    else:
-        getNetRCAuth = netrc.netrc(netrc_path).authenticators
+    getNetRCAuth = lambda _: None
+    if netrc_path is not False:
+        try:
+            getNetRCAuth = netrc.netrc(netrc_path).authenticators
+        except IOError:
+            if netrc_path is not None:
+                raise
     for url in url_list:
         urltype, rest = urllib.splittype(url)
         host, rest = urllib.splithost(rest)
