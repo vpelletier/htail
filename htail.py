@@ -261,7 +261,7 @@ def main():
             'non-empty/successful read; values lower than --sleep-interval '
             'are set to --sleep-interval',
     )
-    parser.add_argument('-v', '--verbose', action='store_true', default=True,
+    parser.add_argument('-v', '--verbose', action='store_true', default=False,
         help='always output headers giving file names',
     )
     options = parser.parse_args()
