@@ -17,8 +17,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import base64
+import errno
 import httplib
 import netrc
+import socket
 import time
 import urllib
 
@@ -106,7 +108,12 @@ class HTTPFile(object):
             self._connection.putheader('Authorization', 'Basic ' + self._auth)
         for k, v in header_dict.iteritems():
             self._connection.putheader(k, v)
-        self._connection.endheaders()
+        try:
+            self._connection.endheaders()
+        except socket.error, exc:
+            if exc.errno == errno.EHOSTUNREACH:
+                raise HTTPFileTempFail
+            raise
         return self._connection.getresponse()
 
 DEFAULT_OFFSET = 1024
