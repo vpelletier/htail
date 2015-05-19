@@ -9,7 +9,8 @@ last part of a large file should be retrieved without transfering it all.
 Look & feel
 ===========
 
-Mimics GNU tail_ (at least as of GNU coreutils 8.21).
+Mimics GNU tail_ (at least as of GNU coreutils 8.21), with hints of curl_
+where needed (ex: CA certificates).
 
 Differences:
 
@@ -23,3 +24,4 @@ Differences:
   is available by specifying `--sleep-max-interval`.
 
 .. _tail: http://www.gnu.org/software/coreutils/manual/html_node/tail-invocation.html
+.. _curl: http://curl.haxx.se/
