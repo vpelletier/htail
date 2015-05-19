@@ -20,13 +20,23 @@ import base64
 import errno
 import httplib
 import netrc
+import os.path
 import socket
+import ssl
 import time
 import urllib
 
+class DirectoryType(str):
+    def __new__(cls, value):
+        if not os.path.isdir(value):
+            raise argparse.ArgumentTypeError(
+                '%r not a directory' % (value, )
+            )
+        super(DirectoryType).__new__(value)
+
 scheme_dict = {
-    'http': httplib.HTTPConnection,
-    'https': httplib.HTTPSConnection,
+    'http': (httplib.HTTPConnection, False),
+    'https': (httplib.HTTPSConnection, True),
 }
 
 decode_dict = {
@@ -133,7 +143,16 @@ def basicAuth(login, password):
 def tail(stream,
         url_list, offset=-DEFAULT_OFFSET, whence=WHENCE_END, follow=False,
         retry=False, sleep_min=SLEEP_MIN, sleep_max=SLEEP_MAX, quiet=False,
-        verbose=False, netrc_path=None):
+        verbose=False, netrc_path=None, capath=None, cafile=None,
+        verify_mode=ssl.CERT_REQUIRED):
+    ssl_context = ssl.SSLContext(
+        ssl.PROTOCOL_SSLv23, # TODO: make configurable by parameter
+    )
+    if capath is None and cafile is None:
+        ssl_context.load_default_certs()
+    else:
+        ssl_context.load_verify_locations(cafile=cafile, capath=capath)
+    ssl_context.verify_mode = verify_mode
     httpfile_list = []
     append = httpfile_list.append
     getNetRCAuth = lambda _: None
@@ -157,9 +176,13 @@ def tail(stream,
                 auth = basicAuth(netrc_auth[0], netrc_auth[2])
             else:
                 auth = None
+        connection, need_ssl_context = scheme_dict[urltype.lower()]
+        connection_kw = {}
+        if need_ssl_context:
+            connection_kw['context'] = ssl_context
         http_file = HTTPFile(
             selector,
-            scheme_dict[urltype.lower()](host),
+            connection(host, **connection_kw),
             auth,
         )
         http_file.seek(offset, whence)
@@ -274,6 +297,17 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
         help='always output headers giving file names',
     )
+    # Note: using same parameter naming as curl.
+    parser.add_argument('-k', '--insecure', action='store_true', default=False,
+        help='tolerate ssl connection whose certificate do not lead to a '
+            'trusted certificate authority',
+    )
+    parser.add_argument('--cacert', type=argparse.FileType('r'), default=None,
+        help='trusted certificate authority certificate',
+    )
+    parser.add_argument('--capath', type=DirectoryType, default=None,
+        help='directory containing trusted certificate authority certificates',
+    )
     options = parser.parse_args()
     si_multiplicator_list = 'bkMGTPEZY'
     whence, offset, multiplicator, unit = re.match(
@@ -303,6 +337,12 @@ def main():
             sleep_min=options.sleep_interval,
             sleep_max=options.sleep_max_interval,
             verbose=options.verbose,
+            capath=options.capath,
+            cafile=options.cacert,
+            verify_mode=
+              ssl.CERT_NONE
+              if options.insecure else
+              ssl.CERT_REQUIRED,
         )
     except (KeyboardInterrupt, SystemExit):
         pass
