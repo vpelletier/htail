@@ -111,7 +111,7 @@ class HTTPFile(object):
         try:
             self._connection.endheaders()
         except socket.error, exc:
-            if exc.errno == errno.EHOSTUNREACH:
+            if exc.errno in (errno.EHOSTUNREACH, errno.ECONNRESET):
                 raise HTTPFileTempFail
             raise
         return self._connection.getresponse()
