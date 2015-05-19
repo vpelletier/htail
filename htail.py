@@ -202,9 +202,7 @@ def tail(stream,
             if timeout <= now:
                 try:
                     data = http_file.read()
-                except httplib.BadStatusLine, exc:
-                    if exc.line:
-                        continue
+                except (httplib.BadStatusLine, httplib.CannotSendRequest):
                     data = ''
                 except HTTPFileTempFail:
                     if retry:
