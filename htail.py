@@ -124,6 +124,8 @@ class HTTPFile(object):
             if exc.errno in (errno.EHOSTUNREACH, errno.ECONNRESET):
                 raise HTTPFileTempFail
             raise
+        except ssl.SSLEOFError:
+            raise HTTPFileTempFail
         return self._connection.getresponse()
 
 DEFAULT_OFFSET = 1024
