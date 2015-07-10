@@ -121,7 +121,11 @@ class HTTPFile(object):
         try:
             self._connection.endheaders()
         except socket.error, exc:
-            if exc.errno in (errno.EHOSTUNREACH, errno.ECONNRESET):
+            if exc.errno in (
+                        errno.EHOSTUNREACH,
+                        errno.ENETUNREACH,
+                        errno.ECONNRESET,
+                    ):
                 raise HTTPFileTempFail
             raise
         except ssl.SSLEOFError:
