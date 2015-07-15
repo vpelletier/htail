@@ -46,6 +46,7 @@ GOOD_STATUS_SET = (
     httplib.REQUESTED_RANGE_NOT_SATISFIABLE,
     httplib.OK,
     httplib.PARTIAL_CONTENT,
+    httplib.NO_CONTENT,
 )
 TEMPFAIL_STATUS_SET = (
     httplib.NOT_FOUND,
