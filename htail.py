@@ -69,7 +69,8 @@ class HTTPFile(object):
     def len(self):
         response = self._request('HEAD')
         response.close()
-        assert response.status == 200, repr(response.status)
+        if response.status not in GOOD_STATUS_SET:
+            raise HTTPFileError(response.status)
         result = response.getheader('content-length')
         if result is None:
             raise ValueError('server does not report content-length')
@@ -192,8 +193,12 @@ def tail(stream,
             connection(host, **connection_kw),
             auth,
         )
-        http_file.seek(offset, whence)
-        append([0, sleep_min, http_file, url])
+        try:
+            http_file.seek(offset, whence)
+        except HTTPFileError:
+            pass
+        else:
+            append([0, sleep_min, http_file, url])
     if verbose or len(httpfile_list) > 1:
         last_activity = None
     elif len(httpfile_list) == 1:
