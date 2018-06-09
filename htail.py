@@ -103,11 +103,11 @@ class HTTPFile(object):
         raise HTTPFileError(status)
 
     def seek(self, offset, whence=0):
-        if whence == 0:
+        if whence == SEEK_SET:
             self._offset = offset
-        elif whence == 1:
+        elif whence == SEEK_CUR:
             self._offset += offset
-        elif whence == 2:
+        elif whence == SEEK_END:
             self._offset = self.len() + offset
         else:
             raise ValueError(repr(whence))
@@ -139,8 +139,9 @@ DEFAULT_OFFSET = 1024
 SLEEP_MIN = 1
 SLEEP_MAX = 16
 
-WHENCE_BEGIN = 0
-WHENCE_END = 2
+SEEK_SET = 0
+SEEK_CUR = 1
+SEEK_END = 2
 
 JEDEC_UNIT = 1024
 IEC_UNIT = 1000
@@ -149,7 +150,7 @@ def basicAuth(login, password):
     return base64.b64encode(login + ':' + password).strip()
 
 def tail(stream,
-        url_list, offset=-DEFAULT_OFFSET, whence=WHENCE_END, follow=False,
+        url_list, offset=-DEFAULT_OFFSET, whence=SEEK_END, follow=False,
         retry=False, sleep_min=SLEEP_MIN, sleep_max=SLEEP_MAX, quiet=False,
         verbose=False, netrc_path=None, capath=None, cafile=None,
         verify_mode=ssl.CERT_REQUIRED):
@@ -339,7 +340,7 @@ def main():
                     si_multiplicator_list.index(multiplicator or 'b')
                 )
             )) * {'': -1, '+': 1}[whence],
-            whence={'': WHENCE_END, '+': WHENCE_BEGIN}[whence],
+            whence={'': SEEK_END, '+': SEEK_SET}[whence],
             quiet=options.quiet,
             follow=options.follow | options.follow_retry,
             netrc_path=options.netrc,
