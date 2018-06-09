@@ -203,9 +203,9 @@ def tail(stream,
         try:
             http_file.seek(offset, whence)
         except HTTPFileError:
-            pass
-        else:
-            append([0, sleep_min, http_file, url])
+            if not retry:
+                continue
+        append([0, sleep_min, http_file, url])
     if verbose or len(httpfile_list) > 1:
         last_activity = None
     elif len(httpfile_list) == 1:
