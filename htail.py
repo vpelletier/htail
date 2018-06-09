@@ -76,6 +76,9 @@ class HTTPFile(object):
             raise ValueError('server does not report content-length')
         return int(result)
 
+    def tell(self):
+        return self._offset
+
     def read(self, length=None):
         offset = self._offset
         byte_range = 'bytes=%d-' % offset
@@ -133,6 +136,9 @@ class HTTPFile(object):
         except ssl.SSLEOFError:
             raise HTTPFileTempFail
         return self._connection.getresponse()
+
+    def __repr__(self):
+        return '<%s@%x %s@%s>' % (self.__class__.__name__, id(self), self._selector, self._offset)
 
 DEFAULT_OFFSET = 1024
 
