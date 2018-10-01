@@ -100,6 +100,8 @@ class HTTPFile(object):
             if encoding != 'identity':
                 body = decode_dict[encoding](body)
             self._offset += len(body)
+            if status == httplib.REQUESTED_RANGE_NOT_SATISFIABLE:
+                return ""
             return body
         if status in TEMPFAIL_STATUS_SET:
             raise HTTPFileTempFail(status)
