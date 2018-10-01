@@ -130,6 +130,7 @@ class HTTPFile(object):
                         errno.EHOSTUNREACH,
                         errno.ENETUNREACH,
                         errno.ECONNRESET,
+                        errno.EPIPE,
                     ):
                 raise HTTPFileTempFail
             raise
