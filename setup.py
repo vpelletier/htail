@@ -1,12 +1,8 @@
 from setuptools import setup
 from os.path import join, dirname
 import sys
-extra = {}
-if sys.version_info >= (3, ):
-    extra['use_2to3'] = True
 
 description = open(join(dirname(__file__), 'README.rst')).read()
-
 setup(
     name='htail',
     version='1.3',
@@ -36,5 +32,5 @@ setup(
         ],
     },
     zip_safe=True,
-    **extra
+    use_2to3=sys.version_info >= (3, ),
 )
