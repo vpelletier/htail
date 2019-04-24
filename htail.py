@@ -127,7 +127,7 @@ class HTTPFile(object):
             self._connection.putheader(k, v)
         try:
             self._connection.endheaders()
-        except socket.error, exc:
+        except socket.error as exc:
             if exc.errno in (
                         errno.EHOSTUNREACH,
                         errno.ENETUNREACH,
