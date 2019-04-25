@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import base64
+from email.message import Message
 import errno
 import httplib
 import netrc
@@ -60,11 +61,18 @@ class HTTPFileTempFail(HTTPFileError):
     pass
 
 class HTTPFile(object):
-    def __init__(self, selector, connection, auth=None):
+    def __init__(
+        self,
+        selector,
+        connection,
+        auth=None,
+        default_encoding='ascii',
+    ):
         self._selector = selector
         self._connection = connection
         self._auth = auth
         self._offset = 0
+        self.encoding = default_encoding
 
     def len(self):
         response = self._request('HEAD')
@@ -88,21 +96,37 @@ class HTTPFile(object):
             'Range': byte_range,
             'Accept-Encoding': ', '.join(decode_dict),
         })
-        status = response.status
-        if status in GOOD_STATUS_SET:
-            length = response.getheader('content-length')
-            if length is None:
-                response.close()
-                return ''
-            encoding = response.getheader('content-encoding', 'identity').lower()
-            body = response.read(int(length))
+        try:
+            status = response.status
+            if status in GOOD_STATUS_SET:
+                length = response.getheader('content-length')
+                if (
+                    length is None or
+                    status == httplib.REQUESTED_RANGE_NOT_SATISFIABLE
+                ):
+                    body = b''
+                else:
+                    encoding = response.getheader(
+                        'content-encoding',
+                        'identity',
+                    ).lower()
+                    body = response.read(int(length))
+                    if encoding != 'identity':
+                        body = decode_dict[encoding](body)
+                    self._offset += len(body)
+                    # On python3, response.msg is an email.message.Message
+                    # instance, but not on python2. So align with python2.
+                    encoding_parser = Message()
+                    encoding_parser.add_header(
+                        'content-type',
+                        response.getheader('content-type', 'text/plain'),
+                    )
+                    self.encoding = encoding_parser.get_content_charset(
+                        self.encoding,
+                    )
+                return body
+        finally:
             response.close()
-            if encoding != 'identity':
-                body = decode_dict[encoding](body)
-            self._offset += len(body)
-            if status == httplib.REQUESTED_RANGE_NOT_SATISFIABLE:
-                return ""
-            return body
         if status in TEMPFAIL_STATUS_SET:
             raise HTTPFileTempFail(status)
         raise HTTPFileError(status)
@@ -211,6 +235,7 @@ def tail(stream,
             selector,
             connection(host, **connection_kw),
             auth,
+            default_encoding=getattr(stream, 'encoding', 'ascii'),
         )
         try:
             http_file.seek(offset, whence)
@@ -234,10 +259,10 @@ def tail(stream,
                 try:
                     data = http_file.read()
                 except (httplib.BadStatusLine, httplib.CannotSendRequest):
-                    data = ''
+                    data = b''
                 except HTTPFileTempFail:
                     if retry:
-                        data = ''
+                        data = b''
                     else:
                         continue
                 except HTTPFileError:
@@ -249,8 +274,8 @@ def tail(stream,
                             stream.write('\n')
                         stream.write('==> ' + url + ' <==\n')
                         last_activity = http_file
-                    need_newline |= data[-1] != '\n'
-                    stream.write(data)
+                    need_newline |= data[-1] != b'\n'
+                    stream.write(data.decode(http_file.encoding))
                     if follow:
                         sleep = sleep_min
                     else:
