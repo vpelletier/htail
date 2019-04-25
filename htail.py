@@ -120,7 +120,11 @@ class HTTPFile(object):
             self._offset = 0
 
     def _request(self, method, header_dict={}):
-        self._connection.putrequest(method, self._selector, skip_accept_encoding=True)
+        self._connection.putrequest(
+            method,
+            self._selector,
+            skip_accept_encoding=True,
+        )
         if self._auth:
             self._connection.putheader('Authorization', 'Basic ' + self._auth)
         for k, v in header_dict.iteritems():
@@ -141,7 +145,12 @@ class HTTPFile(object):
         return self._connection.getresponse()
 
     def __repr__(self):
-        return '<%s@%x %s@%s>' % (self.__class__.__name__, id(self), self._selector, self._offset)
+        return '<%s@%x %s@%s>' % (
+            self.__class__.__name__,
+            id(self),
+            self._selector,
+            self._offset,
+        )
 
 DEFAULT_OFFSET = 1024
 
