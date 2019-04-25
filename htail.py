@@ -293,6 +293,8 @@ def main():
         help='same as --follow --retry',
     )
     parser.add_argument('-n', '--netrc', nargs='?',
+        default=False, # not provided, inhibit netrc usage.
+        const=None, # provided without value, use default location.
         help='enable netrc usage; optionally specifying a non-standard path',
     )
     parser.add_argument('-q', '--quiet', '--silent', action='store_true',
