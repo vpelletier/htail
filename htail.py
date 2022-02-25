@@ -19,13 +19,19 @@
 import base64
 from email.message import Message
 import errno
-import httplib
+try:
+	import http.client as httplib
+except ImportError:
+	import httplib
 import netrc
 import os.path
 import socket
 import ssl
 import time
-import urllib
+try:
+	import urllib.parse as urllib
+except ImportError:
+	import urllib
 
 class DirectoryType(str):
     def __new__(cls, value):
@@ -151,7 +157,7 @@ class HTTPFile(object):
         )
         if self._auth:
             self._connection.putheader('Authorization', 'Basic ' + self._auth)
-        for k, v in header_dict.iteritems():
+        for k, v in header_dict.items():
             self._connection.putheader(k, v)
         try:
             self._connection.endheaders()

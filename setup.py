@@ -49,5 +49,4 @@ setup(
         ],
     },
     zip_safe=True,
-    use_2to3=sys.version_info >= (3, ),
 )
