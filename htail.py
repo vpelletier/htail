@@ -29,9 +29,9 @@ import socket
 import ssl
 import time
 try:
-    import urllib.parse as urllib
+    import urllib.parse as urlparse
 except ImportError:
-    import urllib
+    import urlparse
 
 class DirectoryType(str):
     def __new__(cls, value):
@@ -197,13 +197,18 @@ IEC_UNIT = 1000
 def basicAuth(login, password):
     return base64.b64encode(login + ':' + password).strip()
 
+try:
+    _default_protocol_tls = ssl.PROTOCOL_TLS_CLIENT
+except AttributeError: # BBB
+    _default_protocol_tls = ssl.PROTOCOL_SSLv23
+
 def tail(stream,
         url_list, offset=-DEFAULT_OFFSET, whence=SEEK_END, follow=False,
         retry=False, sleep_min=SLEEP_MIN, sleep_max=SLEEP_MAX, quiet=False,
         verbose=False, netrc_path=None, capath=None, cafile=None,
         verify_mode=ssl.CERT_REQUIRED):
     ssl_context = ssl.SSLContext(
-        ssl.PROTOCOL_SSLv23, # TODO: make configurable by parameter
+        _default_protocol_tls, # TODO: make configurable by parameter
     )
     if capath is None and cafile is None:
         ssl_context.load_default_certs()
@@ -220,12 +225,21 @@ def tail(stream,
             if netrc_path is not None:
                 raise
     for url in url_list:
-        urltype, rest = urllib.splittype(url)
-        host, rest = urllib.splithost(rest)
-        user_passwd, host = urllib.splituser(host)
-        if user_passwd:
-            selector = urltype + '://' + host + rest
-            auth = basicAuth(*urllib.splitpasswd(user_passwd))
+        parsed_url = urlparse.urlparse(url)
+        host = parsed_url.hostname
+        if parsed_url.port is not None:
+            host += ':%i' % (parsed_url.port, )
+        if parsed_url.username:
+            selector = urlparse.urlunparse((
+              scheme,
+              host,
+              parsed_url.path,
+              parsed_url.params,
+              parsed_url.query,
+              parsed_url.fragment,
+            ))
+            selector = parsed_url.scheme + '://' + host + rest
+            auth = basicAuth(parsed_url.username, parsed_url.password)
         else:
             selector = url
             netrc_auth = getNetRCAuth(host)
@@ -233,7 +247,7 @@ def tail(stream,
                 auth = basicAuth(netrc_auth[0], netrc_auth[2])
             else:
                 auth = None
-        connection, need_ssl_context = scheme_dict[urltype.lower()]
+        connection, need_ssl_context = scheme_dict[parsed_url.scheme.lower()]
         connection_kw = {}
         if need_ssl_context:
             connection_kw['context'] = ssl_context
