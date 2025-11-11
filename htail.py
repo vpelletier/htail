@@ -20,18 +20,18 @@ import base64
 from email.message import Message
 import errno
 try:
-	import http.client as httplib
+    import http.client as httplib
 except ImportError:
-	import httplib
+    import httplib
 import netrc
 import os.path
 import socket
 import ssl
 import time
 try:
-	import urllib.parse as urllib
+    import urllib.parse as urllib
 except ImportError:
-	import urllib
+    import urllib
 
 class DirectoryType(str):
     def __new__(cls, value):
