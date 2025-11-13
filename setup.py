@@ -22,18 +22,18 @@ import sys
 description = open(join(dirname(__file__), 'README.rst')).read()
 setup(
     name='htail',
-    version='1.5',
+    version='1.6',
     author='Vincent Pelletier',
     author_email='plr.vincent@gmail.com',
     description=next(x for x in description.splitlines() if x.strip()),
     long_description=description,
+    long_description_content_type='text/x-rst',
     url='http://github.com/vpelletier/htail',
-    license='GPL 2+',
+    license='GPL-2.0-or-later',
     platforms=['any'],
     classifiers=[
         'Intended Audience :: System Administrators',
         'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
